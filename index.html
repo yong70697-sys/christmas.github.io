@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>圣诞树动画</title>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+</head>
+<body>
+<script>
+let treeParticles = [];
+let decorations = [];
+let backgroundParticles = [];
+let snowflakes = [];
+let snowOnTree = [];
+let starAngle = 0;
+
+function setup() {
+  createCanvas(400, 600);
+  
+  // 背景粒子
+  for (let i = 0; i < 50; i++) {
+    backgroundParticles.push({
+      x: random(width),
+      y: random(height),
+      speed: random(0.5, 1.0)
+    });
+  }
+  
+  // 树叶粒子
+  for (let y = -100; y < 200; y += 5) {
+    let widthLayer = int((200 - y) * 0.5);
+    for (let x = -widthLayer; x <= widthLayer; x += 3) {
+      treeParticles.push({x: width/2 + x, y: height/2 - y});
+    }
+  }
+  
+  // 树干
+  for (let x = -10; x <= 10; x += 2) {
+    for (let y = -200; y < -100; y += 5) {
+      treeParticles.push({x: width/2 + x, y: height/2 - y});
+    }
+  }
+  
+  // 红色装饰
+  for (let i = 0; i < 30; i++) {
+    decorations.push({
+      x: random(width/2 - 100, width/2 + 100),
+      y: random(height/2 - 150, height/2 + 150),
+      color: [255, 0, 0],
+      blink: random() < 0.5
+    });
+  }
+  
+  // 树顶黄色星星
+  let starCoords = [
+    {x:0,y:220},{x:5,y:205},{x:20,y:205},{x:10,y:195},{x:15,y:180},
+    {x:0,y:190},{x:-15,y:180},{x:-10,y:195},{x:-20,y:205},{x:-5,y:205}
+  ];
+  for (let p of starCoords) {
+    decorations.push({
+      x: width/2 + p.x,
+      y: height/2 - p.y,
+      color: [255, 255, 0],
+      blink: random() < 0.5
+    });
+  }
+  
+  // 雪花
+  for (let i = 0; i < 50; i++) {
+    snowflakes.push({
+      x: random(width),
+      y: random(-200, 0),
+      speed: random(1, 2),
+      falling: true
+    });
+  }
+}
+
+function draw() {
+  background(0);
+  
+  // 背景粒子
+  fill(50);
+  noStroke();
+  for (let p of backgroundParticles) {
+    ellipse(p.x, p.y, 3);
+    p.y += p.speed;
+    if (p.y > height) {
+      p.y = 0;
+      p.x = random(width);
+    }
+  }
+  
+  // 树叶粒子
+  fill(0, 255, 0);
+  for (let p of treeParticles) {
+    ellipse(p.x, p.y, 3);
+  }
+  
+  // 装饰闪烁
+  for (let d of decorations) {
+    if (random() < 0.05) {
+      d.blink = !d.blink;
+    }
+    if (d.blink) fill(...d.color);
+    else fill(150);
+    ellipse(d.x, d.y, 4);
+  }
+  
+  // 树顶旋转星星
+  push();
+  translate(width/2, height/2 - 220);
+  rotate(radians(starAngle));
+  fill(255, 255, 0);
+  beginShape();
+  for (let i = 0; i < 5; i++) {
+    let angle = TWO_PI/5*i - HALF_PI;
+    let x = 10 * cos(angle);
+    let y = 10 * sin(angle);
+    vertex(x, y);
+    angle += TWO_PI/10;
+    vertex(5 * cos(angle), 5 * sin(angle));
+  }
+  endShape(CLOSE);
+  pop();
+  starAngle += 5;
+  if (starAngle >= 360) starAngle = 0;
+  
+  // 雪花飘落并堆积
+  fill(255);
+  for (let s of snowflakes) {
+    if (s.falling) {
+      s.y += s.speed;
+      s.x += random(-0.3,0.3);
+      // 碰到树叶或已有雪花
+      let stop = false;
+      for (let t of treeParticles.concat(snowOnTree)) {
+        if (dist(s.x, s.y, t.x, t.y) < 3) {
+          s.y = t.y - 0.5;
+          snowOnTree.push({x: s.x, y: s.y});
+          s.falling = false;
+          stop = true;
+          break;
+        }
+      }
+      if (s.y > height) {
+        s.y = 0;
+        s.x = random(width);
+      }
+      if (!stop) ellipse(s.x, s.y, 3);
+    } else {
+      ellipse(s.x, s.y, 3);
+    }
+  }
+}
+</script>
+</body>
+</html>
